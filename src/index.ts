@@ -60,6 +60,9 @@ app.use(
   })
 );
 
+app.get("/", (req, res) => {
+  res.send("NoteKeeper Backend is running");
+});
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/notes", notesRoutes);
