@@ -26,6 +26,19 @@ router.post("/subjects", async (req: AuthRequest, res) => {
   }
 });
 
+router.put("/subjects/:id", async (req: AuthRequest, res) => {
+  try {
+    const subject = await Subject.findOneAndUpdate(
+      { _id: req.params.id, userId: req.userId },
+      { name: req.body.name },
+      { returnDocument: 'after' }
+    );
+    res.json(subject);
+  } catch (error) {
+    res.status(500).json({ error: "Error updating subject" });
+  }
+});
+
 router.delete("/subjects/:id", async (req: AuthRequest, res) => {
   try {
     await Subject.findOneAndDelete({ _id: req.params.id, userId: req.userId });
