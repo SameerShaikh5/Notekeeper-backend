@@ -1,5 +1,5 @@
 import express from "express";
-import { Subject, Topic, Block } from "../models/Notes";
+import { Subject, Topic } from "../models/Notes";
 import { requireAuth, AuthRequest } from "../middleware/auth";
 
 const router = express.Router();
@@ -50,17 +50,6 @@ router.post("/topics", async (req: AuthRequest, res) => {
   try {
     const topic = new Topic({ ...req.body, userId: req.userId });
     await topic.save();
-    
-    // Create an initial empty block for the new topic
-    const initialBlock = new Block({
-      topicId: topic._id,
-      userId: req.userId,
-      type: "text",
-      content: "",
-      order: 0
-    });
-    await initialBlock.save();
-
     res.status(201).json(topic);
   } catch (error) {
     res.status(500).json({ error: "Error creating topic" });
@@ -86,52 +75,23 @@ router.put("/topics/reorder", async (req: AuthRequest, res) => {
 router.delete("/topics/:id", async (req: AuthRequest, res) => {
   try {
     await Topic.findOneAndDelete({ _id: req.params.id, userId: req.userId });
-    await Block.deleteMany({ topicId: req.params.id, userId: req.userId });
     res.json({ message: "Topic deleted" });
   } catch (error) {
     res.status(500).json({ error: "Error deleting topic" });
   }
 });
 
-// Blocks
-router.get("/blocks/:topicId", async (req: AuthRequest, res) => {
+// Update Topic (Content/Title)
+router.put("/topics/:id", async (req: AuthRequest, res) => {
   try {
-    const blocks = await Block.find({ topicId: req.params.topicId, userId: req.userId }).sort({ order: 1 });
-    res.json(blocks);
-  } catch (error) {
-    res.status(500).json({ error: "Error fetching blocks" });
-  }
-});
-
-router.post("/blocks", async (req: AuthRequest, res) => {
-  try {
-    const block = new Block({ ...req.body, userId: req.userId });
-    await block.save();
-    res.status(201).json(block);
-  } catch (error) {
-    res.status(500).json({ error: "Error creating block" });
-  }
-});
-
-router.put("/blocks/:id", async (req: AuthRequest, res) => {
-  try {
-    const block = await Block.findOneAndUpdate(
+    const topic = await Topic.findOneAndUpdate(
       { _id: req.params.id, userId: req.userId },
       req.body,
-      { new: true }
+      { returnDocument: 'after' }
     );
-    res.json(block);
+    res.json(topic);
   } catch (error) {
-    res.status(500).json({ error: "Error updating block" });
-  }
-});
-
-router.delete("/blocks/:id", async (req: AuthRequest, res) => {
-  try {
-    await Block.findOneAndDelete({ _id: req.params.id, userId: req.userId });
-    res.json({ message: "Block deleted" });
-  } catch (error) {
-    res.status(500).json({ error: "Error deleting block" });
+    res.status(500).json({ error: "Error updating topic" });
   }
 });
 

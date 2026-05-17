@@ -3,15 +3,31 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User } from "../models/User";
 import { requireAuth, AuthRequest } from "../middleware/auth";
+import validator from "validator";
+import rateLimit from "express-rate-limit";
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // limit each IP to 10 requests per windowMs for auth
+  message: { error: "Too many attempts, please try again after 15 minutes." }
+});
 
 const router = express.Router();
 
-router.post("/signup", async (req, res) => {
+router.post("/signup", authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ error: "Please provide a valid email address" });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters long" });
     }
 
     const existingUser = await User.findOne({ email });
@@ -41,9 +57,18 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ error: "Please provide a valid email address" });
+    }
+
     const user = await User.findOne({ email });
 
     if (!user) {
