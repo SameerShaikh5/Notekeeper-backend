@@ -4,17 +4,9 @@ import jwt from "jsonwebtoken";
 import { User } from "../models/User";
 import { requireAuth, AuthRequest } from "../middleware/auth";
 import validator from "validator";
-import rateLimit from "express-rate-limit";
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // limit each IP to 10 requests per windowMs for auth
-  message: { error: "Too many attempts, please try again after 15 minutes." }
-});
-
 const router = express.Router();
 
-router.post("/signup", authLimiter, async (req, res) => {
+router.post("/signup", async (req, res) => {
   try {
     const { email, password } = req.body;
     
@@ -57,7 +49,7 @@ router.post("/signup", authLimiter, async (req, res) => {
   }
 });
 
-router.post("/login", authLimiter, async (req, res) => {
+router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
